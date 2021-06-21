@@ -10,6 +10,7 @@ import com.splitwise.models.User;
 import com.splitwise.repositories.UserRepository;
 import com.splitwise.services.authentication.AuthenticationContext;
 import com.splitwise.services.authentication.PasswordEncoder;
+import com.splitwise.services.settleupstrategy.user.SettleUserStrategy;
 
 import java.util.List;
 
@@ -18,9 +19,12 @@ public class UserController {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder = null;
 
-    public UserController(UserRepository userRepository) {
+    public UserController(UserRepository userRepository, SettleUserStrategy settleUserStrategy) {
         this.userRepository = userRepository;
+        this.settleUserStrategy = settleUserStrategy;
     }
+
+    SettleUserStrategy settleUserStrategy;
 
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
@@ -66,22 +70,29 @@ public class UserController {
     public Double getMyTotalOwedAmount(AuthenticationContext authenticationContext) {
         User currenltyLoggedInUser = authenticationContext
                 .getCurrentlyLoggedInUser()
-                .orElseThrow(() -> new NotLoggedInException("User needs to login to update profile"));
+                .orElseThrow(() -> new NotLoggedInException("User needs to login to see its total owed amount"));
         return currenltyLoggedInUser.getTotalOwedAmount();
     }
 
     public List<Expense> getExpenseHistory(AuthenticationContext authenticationContext) {
         User currenltyLoggedInUser = authenticationContext
                 .getCurrentlyLoggedInUser()
-                .orElseThrow(() -> new NotLoggedInException("User needs to login to update profile"));
+                .orElseThrow(() -> new NotLoggedInException("User needs to login to see expense history"));
         return currenltyLoggedInUser.getExpenses();
     }
 
     public List<Group> getGroups(AuthenticationContext authenticationContext) {
         User currenltyLoggedInUser = authenticationContext
                 .getCurrentlyLoggedInUser()
-                .orElseThrow(() -> new NotLoggedInException("User needs to login to update profile"));
+                .orElseThrow(() -> new NotLoggedInException("User needs to login to get groups"));
         return currenltyLoggedInUser.getGroups();
+    }
+
+    public String settleUpUser(AuthenticationContext authenticationContext){
+        User currentlyLoggedInUser = authenticationContext
+                .getCurrentlyLoggedInUser()
+                .orElseThrow(() -> new NotLoggedInException("User needs to login to settle up"));
+        return settleUserStrategy.settleUp(currentlyLoggedInUser);
     }
 
 }

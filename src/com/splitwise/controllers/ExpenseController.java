@@ -15,6 +15,7 @@ import com.splitwise.services.splitstrategy.SplitStrategy;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ExpenseController {
@@ -37,16 +38,16 @@ public class ExpenseController {
         User currentlyLoggedInUser = authenticationContext
                 .getCurrentlyLoggedInUser()
                 .orElseThrow(() -> new NotLoggedInException("User Needs to login to create expense"));
-        List<User> participants = participantIds
+        Set<User> participants = participantIds
                 .stream()
                 .map((id) -> userRepository
                         .findById(id)
                         .orElseThrow(() -> new UserNotFoundException(id.toString())))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
+        participants.add(currentlyLoggedInUser);
         Expense expense = new Expense(date,
                 description,
-                participants
-                );
+                participants);
 
         paymentStrategy.calculatePaidAmounts(expense);
         splitStrategy.calculateOwedAmounts(expense);
@@ -61,19 +62,25 @@ public class ExpenseController {
                                        String descriptiton,
                                        PaymentStrategy paymentStrategy,
                                        SplitStrategy splitStrategy) {
+        User currentlyLoggedInUser = authenticationContext
+                .getCurrentlyLoggedInUser()
+                .orElseThrow(() -> new NotLoggedInException("User Needs to login to create expense"));
         Group group= groupRepository
                 .findById(groupId)
                 .orElseThrow(()-> new GroupNotFoundException(groupId.toString()));
-        List<Long> participantIds = group.getMembers()
-                .stream()
-                .map((user) -> user.getId())
-                .collect(Collectors.toList());
+        Set<User> participants = group.getMembers();
 
-        return createExpenseWithUsers(authenticationContext,
-                participantIds,
-                date,
-                descriptiton,
-                paymentStrategy,
-                splitStrategy);
+        if(!participants.contains(currentlyLoggedInUser))
+            throw new GroupNotFoundException("You are not a member of this group");
+
+        Expense expense= new Expense(date, descriptiton, participants);
+
+        paymentStrategy.calculatePaidAmounts(expense);
+        splitStrategy.calculateOwedAmounts(expense);
+
+        expense.setGroup(group);
+
+        expenseRepository.save(expense);
+        return expense;
     }
 }

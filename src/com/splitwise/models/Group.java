@@ -1,12 +1,13 @@
 package com.splitwise.models;
 
 import java.util.List;
+import java.util.Set;
 
 public class Group extends Auditable {
     private String name;
     private User owner;
-    private List<User> members;
-    private List<Expense> expenses;
+    private Set<User> members;
+    private Set<Expense> expenses;
 
     public Group(User currenltyLoggedInUser, String name) {
         this.owner = currenltyLoggedInUser;
@@ -29,19 +30,19 @@ public class Group extends Auditable {
         this.owner = owner;
     }
 
-    public List<User> getMembers() {
+    public Set<User> getMembers() {
         return members;
     }
 
-    public void setMembers(List<User> members) {
+    public void setMembers(Set<User> members) {
         this.members = members;
     }
 
-    public List<Expense> getExpenses() {
+    public Set<Expense> getExpenses() {
         return expenses;
     }
 
-    public void setExpenses(List<Expense> expenses) {
+    public void setExpenses(Set<Expense> expenses) {
         this.expenses = expenses;
     }
 }
